@@ -18,7 +18,7 @@ const int H = MSIZE; // window height
 
 const int SPACE = 1;
 const int WALL = 2;
-
+insert error!!!
 /*******************************************************************/
 /*		ALWAYS WORK WITH MULTIPLICATION OF CELL_SIZE IN THE MAZE
 				OTHERWISE IT WON'T DRAW IT!!!!!!!!!!
