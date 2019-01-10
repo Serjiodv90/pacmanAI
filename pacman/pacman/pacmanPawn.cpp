@@ -19,6 +19,7 @@ void PacmanPawn::drawPacmanClosed()
 {
 	glPushMatrix();
 	glTranslated(this->translationPoint->getX(), this->translationPoint->getY(), 0);
+	glRotated(this->rotationAngle, 0, 0, 1);
 	glScaled(this->scale, this->scale, 1);
 
 	double PI = 3.14;
@@ -52,8 +53,12 @@ void PacmanPawn::drawPacmanClosed()
 void PacmanPawn::drawPacmanOpen()
 {
 	glPushMatrix();
+	
 	glTranslated(this->translationPoint->getX(), this->translationPoint->getY(), 0);
+	glRotated(this->rotationAngle, 0, 0, 1);
 	glScaled(this->scale, this->scale, 1);
+	
+
 
 	double PI = 3.14;
 	double alpha, x, y, radius = 1, delta = PI / 20;
@@ -97,8 +102,44 @@ Point2D * PacmanPawn::getPacmanLocation()
 	return this->translationPoint;
 }
 
-void PacmanPawn::setTranslation(Point2D * toPoint)
+void PacmanPawn::setTranslation(PacmanPawn::pacmanDirection dir, Point2D * toPoint)
 {
+	switch (dir)
+	{
+	case PacmanPawn::Up:
+		this->rotationAngle = 90;
+		break;
+	case PacmanPawn::Down:
+		this->rotationAngle = -90;
+		break;
+	case PacmanPawn::Left:
+		this->rotationAngle = 180;
+		break;
+	case PacmanPawn::Right:
+		this->rotationAngle = 0;
+		break;
+	default:
+		break;
+	}
 	this->translationPoint->setX(toPoint->getX());
 	this->translationPoint->setY(toPoint->getY());
+}
+
+PacmanPawn::pacmanDirection PacmanPawn::getDirection()
+{
+	switch (this->rotationAngle)
+	{
+	case 0:
+		return PacmanPawn::pacmanDirection::Right;
+		break;
+	case 90:
+		return PacmanPawn::pacmanDirection::Up;
+		break;
+	case -90:
+		return PacmanPawn::pacmanDirection::Down;
+		break;
+	case 180:
+		return PacmanPawn::pacmanDirection::Left;
+		break;
+	}
 }

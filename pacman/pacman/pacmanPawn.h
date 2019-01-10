@@ -14,15 +14,19 @@ using namespace std;
 class PacmanPawn
 {
 
+	
+
 private:
 	bool isOpen = false;
 	Point2D* translationPoint;
 	double scale;
-	vector<double> rotationVector;
+	int rotationAngle = 0;
 	void drawPacmanClosed();
 	void drawPacmanOpen();
 
 public:
+	enum pacmanDirection { Up, Down, Left, Right };
+
 	PacmanPawn(Point2D* startPoint, double scale);
 	~PacmanPawn();
 
@@ -30,7 +34,9 @@ public:
 	void changeIsOpen();
 	void drawPacman();
 	Point2D* getPacmanLocation();
-	void setTranslation(Point2D* toPoint);
+	void setTranslation(pacmanDirection dir, Point2D* toPoint);
+	pacmanDirection getDirection();
+	
 };
 
 
