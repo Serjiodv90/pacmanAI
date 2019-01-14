@@ -20,6 +20,7 @@ const int SPACE = 1;
 const int WALL = 2;
 const int COIN = 3;
 const int UNREACHABLE = 4;
+const int CENTER = 5;
 
 /*******************************************************************/
 /*        ALWAYS WORK WITH MULTIPLICATION OF CELL_SIZE IN THE MAZE
@@ -82,13 +83,12 @@ void thickenWallInMaze(wallSide side, int row = -1, int col = -1)
 	}
 }
 
-void setUnreachableZone(int bottomRow, int topRow, int leftCol, int rightCol)
+void setUnreachableZone(int bottomRow, int topRow, int leftCol, int rightCol, int unreachableParam = UNREACHABLE)
 {
 	for(int i = bottomRow; i < topRow; i++)
 		for (int j = leftCol; j < rightCol; j++)
-		{
-			maze[i][j] = UNREACHABLE;
-		}
+			maze[i][j] = unreachableParam;
+		
 }
 
 void setupPerimeter()
@@ -133,9 +133,16 @@ void setupPerimeter()
 						thickenWallInMaze(Top, i + middleDoubleSpaceCells, MSIZE - k - 1); //top right
 					}
 				}
-
-				setUnreachableZone(i+1, i + middleDoubleSpaceCells, 0, MSIZE / 6);
-				setUnreachableZone(i+1, i + middleDoubleSpaceCells, MSIZE - (MSIZE / 6), MSIZE);
+				if (i == MSIZE / 3)
+				{
+					setUnreachableZone(i + 1, i + middleDoubleSpaceCells, 0, MSIZE / 6);
+					setUnreachableZone(i + 1, i + middleDoubleSpaceCells, MSIZE - (MSIZE / 6), MSIZE);
+				}
+				else
+				{
+					setUnreachableZone(i + middleDoubleSpaceCells + 1, i, 0, MSIZE / 6);
+					setUnreachableZone(i + middleDoubleSpaceCells + 1, i, MSIZE - (MSIZE / 6) + 1, MSIZE);
+				}
 
 
 			}//set the bottom and top vertical walls in the middle section for left and right
@@ -181,6 +188,9 @@ void setupCenterSquare()
 			}
 		}
 	}
+
+	setUnreachableZone((MSIZE / 2) - SPACE_SIZE + 1, (MSIZE / 2) + SPACE_SIZE ,
+		(MSIZE / 2) - (3 * SPACE_SIZE) + 1, (MSIZE / 2) + (3 * SPACE_SIZE), CENTER);
 }
 
 
@@ -190,32 +200,48 @@ void setupCenterWalls()
 	int middleDoubleSpaceCells = (((MSIZE / 3) - SPACE_SIZE) / 2);
 	middleDoubleSpaceCells -= middleDoubleSpaceCells % CELL_SIZE;    //need to be multiplication of CEEL_SIZE
 
-																	 // botom section
+	// botom section
 	for (i = MSIZE / 3; i < MSIZE / 3 + middleDoubleSpaceCells + CELL_SIZE; i++)
 	{
 		//left wall
-		thickenWallInMaze(Left, i, (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE);
-		thickenWallInMaze(Right, i, (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE - SPACE_SIZE);
+		thickenWallInMaze(Left, i, (MSIZE / 2) - (5 * SPACE_SIZE));
+		thickenWallInMaze(Right, i, (MSIZE / 2) - (6 * SPACE_SIZE));
 
 		//right wall
-		thickenWallInMaze(Right, i, (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE);
-		thickenWallInMaze(Left, i, (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE + SPACE_SIZE);
+		thickenWallInMaze(Right, i, (MSIZE / 2) + (5 * SPACE_SIZE));
+		thickenWallInMaze(Left, i, (MSIZE / 2) + (6 * SPACE_SIZE));
 	}
+
+	//bottom left
+	setUnreachableZone(MSIZE / 3 + 1, MSIZE / 3 + middleDoubleSpaceCells,
+		(MSIZE / 2) - (6 * SPACE_SIZE) + 1, (MSIZE / 2) - (5 * SPACE_SIZE));
+	//bottom right
+	setUnreachableZone(MSIZE / 3 + 1, MSIZE / 3 + middleDoubleSpaceCells,
+		(MSIZE / 2) + (5 * SPACE_SIZE) + 1, (MSIZE / 2) + (6 * SPACE_SIZE));
+
 
 	// top section
 	for (i = 2 * MSIZE / 3 - middleDoubleSpaceCells; i < 2 * MSIZE / 3 + CELL_SIZE; i++)
 	{
 		//left wall
-		thickenWallInMaze(Left, i, (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE);
-		thickenWallInMaze(Right, i, (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE - SPACE_SIZE);
+		thickenWallInMaze(Left, i, (MSIZE / 2) - (5 * SPACE_SIZE));
+		thickenWallInMaze(Right, i, (MSIZE / 2) - (6 * SPACE_SIZE));
 
 		//right wall
-		thickenWallInMaze(Right, i, (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE);
-		thickenWallInMaze(Left, i, (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE + SPACE_SIZE);
+		thickenWallInMaze(Right, i, (MSIZE / 2) + (5 * SPACE_SIZE));
+		thickenWallInMaze(Left, i, (MSIZE / 2) + (6 * SPACE_SIZE));
 	}
 
+	//top left
+	setUnreachableZone(2 * MSIZE / 3 - middleDoubleSpaceCells + 1, 2 * MSIZE / 3 + CELL_SIZE,
+		(MSIZE / 2) - (6 * SPACE_SIZE) + 1, (MSIZE / 2) - (5 * SPACE_SIZE));
+	//top right
+	setUnreachableZone(2 * MSIZE / 3 - middleDoubleSpaceCells + 1, 2 * MSIZE / 3 + CELL_SIZE,
+		(MSIZE / 2) + (5 * SPACE_SIZE) + 1, (MSIZE / 2) + (6 * SPACE_SIZE));
+
+
 	// left vertical lines
-	for (j = (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE; j > (MSIZE / 2) - (3 * SPACE_SIZE) - 3 * SPACE_SIZE - CELL_SIZE; j--)
+	for (j = (MSIZE / 2) - (5 * SPACE_SIZE); j > (MSIZE / 2) - (6 * SPACE_SIZE) - CELL_SIZE; j--)
 	{
 		// top
 		thickenWallInMaze(Top, 2 * MSIZE / 3 - middleDoubleSpaceCells, j);
@@ -227,7 +253,7 @@ void setupCenterWalls()
 	}
 
 	// right vertical lines
-	for (j = (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE; j < (MSIZE / 2) + (3 * SPACE_SIZE) + 3 * SPACE_SIZE + CELL_SIZE; j++)
+	for (j = (MSIZE / 2) + (5 * SPACE_SIZE); j < (MSIZE / 2) + (6 * SPACE_SIZE) + CELL_SIZE; j++)
 	{
 		// top
 		thickenWallInMaze(Top, 2 * MSIZE / 3 - middleDoubleSpaceCells, j);    //bottom line
@@ -251,11 +277,13 @@ void setupTopSection()
 		thickenWallInMaze(Left, i, (MSIZE / 2) + SPACE_SIZE);
 
 		for (j = MSIZE / 2 - SPACE_SIZE; j < MSIZE / 2 + SPACE_SIZE; j++)
-		{
 			if (i == MSIZE - 7 * SPACE_SIZE + CELL_SIZE || i == MSIZE - 8 * SPACE_SIZE + CELL_SIZE)
 				thickenWallInMaze(Top, i, j);
-		}
+		
 	}
+
+	setUnreachableZone(MSIZE - 8 * SPACE_SIZE + CELL_SIZE + 1, MSIZE - 7 * SPACE_SIZE + CELL_SIZE,
+		MSIZE / 2 - SPACE_SIZE + 1, MSIZE / 2 + SPACE_SIZE);
 
 	// top rectangle
 	for (i = MSIZE - 2 * SPACE_SIZE; i >= MSIZE - 3 * SPACE_SIZE; i--)
@@ -264,11 +292,12 @@ void setupTopSection()
 		thickenWallInMaze(Left, i, (MSIZE / 2) + SPACE_SIZE);
 
 		for (j = MSIZE / 2 - SPACE_SIZE; j < MSIZE / 2 + SPACE_SIZE; j++)
-		{
 			if (i == MSIZE - 2 * SPACE_SIZE || i == MSIZE - 3 * SPACE_SIZE)
 				thickenWallInMaze(Bottom, i, j);
-		}
 	}
+
+	setUnreachableZone(MSIZE - 3 * SPACE_SIZE + 1, MSIZE - 2 * SPACE_SIZE,
+		MSIZE / 2 - SPACE_SIZE + 1, MSIZE / 2 + SPACE_SIZE);
 
 	// left +
 	for (i = MSIZE - 2 * SPACE_SIZE; i > MSIZE - 6 * SPACE_SIZE; i--)
@@ -279,7 +308,7 @@ void setupTopSection()
 			thickenWallInMaze(Right, i, (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE - SPACE_SIZE);
 	}
 
-	for (j = (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE; j >= (MSIZE / 2) - (3 * SPACE_SIZE) - 2 * SPACE_SIZE - SPACE_SIZE; j--)
+	for (j = (MSIZE / 2) - (5 * SPACE_SIZE); j >= (MSIZE / 2) - (6 * SPACE_SIZE); j--)
 	{
 		thickenWallInMaze(Bottom, MSIZE - 2 * SPACE_SIZE, j);
 		thickenWallInMaze(Top, MSIZE - 6 * SPACE_SIZE, j);
@@ -296,6 +325,12 @@ void setupTopSection()
 		thickenWallInMaze(Right, i, 2 * SPACE_SIZE);
 	}
 
+	setUnreachableZone(MSIZE - 6 * SPACE_SIZE + 1, MSIZE - 2 * SPACE_SIZE,
+		(MSIZE / 2) - (6 * SPACE_SIZE) + 1, (MSIZE / 2) - (5 * SPACE_SIZE));
+
+	setUnreachableZone(MSIZE - 4 * SPACE_SIZE + 1, MSIZE - 3 * SPACE_SIZE - CELL_SIZE,
+		2 * SPACE_SIZE + 1, 6 * SPACE_SIZE + CELL_SIZE);
+
 	// right +
 	for (i = MSIZE - 2 * SPACE_SIZE; i > MSIZE - 6 * SPACE_SIZE; i--)
 	{
@@ -305,7 +340,7 @@ void setupTopSection()
 			thickenWallInMaze(Left, i, (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE + SPACE_SIZE);
 	}
 
-	for (j = (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE; j <= (MSIZE / 2) + (3 * SPACE_SIZE) + 2 * SPACE_SIZE + SPACE_SIZE; j++)
+	for (j = (MSIZE / 2) + (5 * SPACE_SIZE); j <= (MSIZE / 2) + (6 * SPACE_SIZE); j++)
 	{
 		thickenWallInMaze(Bottom, MSIZE - 2 * SPACE_SIZE, j);
 		thickenWallInMaze(Top, MSIZE - 6 * SPACE_SIZE, j);
@@ -321,6 +356,12 @@ void setupTopSection()
 	{
 		thickenWallInMaze(Left, i, MSIZE - 2 * SPACE_SIZE);
 	}
+
+	setUnreachableZone(MSIZE - 6 * SPACE_SIZE + 1, MSIZE - 2 * SPACE_SIZE, 
+		(MSIZE / 2) + (5 * SPACE_SIZE) + 1, (MSIZE / 2) + (6 * SPACE_SIZE));
+
+	setUnreachableZone(MSIZE - 4 * SPACE_SIZE + 1, MSIZE - 3 * SPACE_SIZE - CELL_SIZE,
+		MSIZE - 6 * SPACE_SIZE - CELL_SIZE + 1, MSIZE - 2 * SPACE_SIZE);
 
 }
 
@@ -340,6 +381,8 @@ void setupBottomSection()
 		thickenWallInMaze(Right, i, MSIZE - 2 * SPACE_SIZE);
 		thickenWallInMaze(Left, i, MSIZE / 2 - SPACE_SIZE);
 	}
+
+	setUnreachableZone(6 * SPACE_SIZE + CELL_SIZE + 1, 7 * SPACE_SIZE - CELL_SIZE, MSIZE / 2 - SPACE_SIZE + 1, MSIZE - 2 * SPACE_SIZE);
 
 
 	// draw right +
@@ -376,6 +419,9 @@ void setupBottomSection()
 		thickenWallInMaze(Top, 2 * SPACE_SIZE, j);
 	}
 
+	setUnreachableZone(3 * SPACE_SIZE + CELL_SIZE + 1, 4 * SPACE_SIZE - CELL_SIZE, MSIZE - 7 * SPACE_SIZE + 1, MSIZE - 2 * SPACE_SIZE);
+	setUnreachableZone(2 * SPACE_SIZE + 1, 5 * SPACE_SIZE, MSIZE - 5 * SPACE_SIZE + 1, MSIZE - 4 * SPACE_SIZE);
+
 	// left rectangle
 	for (j = 2 * SPACE_SIZE; j < MSIZE / 2 + SPACE_SIZE; j++)
 	{
@@ -388,6 +434,9 @@ void setupBottomSection()
 		thickenWallInMaze(Right, i, 2 * SPACE_SIZE);
 		thickenWallInMaze(Left, i, MSIZE / 2 + SPACE_SIZE);
 	}
+
+	setUnreachableZone(3 * SPACE_SIZE + CELL_SIZE + 1, 4 * SPACE_SIZE - CELL_SIZE, 2 * SPACE_SIZE + 1, MSIZE / 2 + SPACE_SIZE);
+
 
 	// draw left +
 	for (j = 2 * SPACE_SIZE; j < 7 * SPACE_SIZE; j++)
@@ -413,6 +462,10 @@ void setupBottomSection()
 	{
 		thickenWallInMaze(Top, 5 * SPACE_SIZE, j);
 	}
+
+	setUnreachableZone(6 * SPACE_SIZE + CELL_SIZE + 1, 7 * SPACE_SIZE - CELL_SIZE, 2 * SPACE_SIZE + 1, 7 * SPACE_SIZE);
+	setUnreachableZone(5 * SPACE_SIZE + 1, 7 * SPACE_SIZE - CELL_SIZE, 4 * SPACE_SIZE + 1, 5 * SPACE_SIZE);
+
 }
 
 void setupInitials()
@@ -461,11 +514,11 @@ void setupMaze()
 			maze[i][j] = SPACE;
 
 	setupPerimeter();
-	/*setupCenterSquare();
+	setupCenterSquare();
 	setupInitials();
 	setupCenterWalls();
 	setupBottomSection();
-	setupTopSection();*/
+	setupTopSection();
 }
 
 bool checkPointCloseToWall(int row, int col)
@@ -762,7 +815,10 @@ void drawMaze()
 				//drawCoin(i, j);
 				break;
 			case UNREACHABLE:
-				glColor3d(0, 0, 0);
+				glColor3d(1, 0, 0);
+				break;
+			case CENTER:
+				glColor3d(0, 1, 0);
 				break;
 
 			}

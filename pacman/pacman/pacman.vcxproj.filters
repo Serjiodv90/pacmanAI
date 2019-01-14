@@ -24,10 +24,10 @@
     <ClInclude Include="pacmanPawn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Point2D.h">
+    <ClInclude Include="Playground.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Playground.h">
+    <ClInclude Include="Point2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -46,10 +46,10 @@
     <ClCompile Include="pacmanPawn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Point2D.cpp">
+    <ClCompile Include="Playground.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Playground.cpp">
+    <ClCompile Include="Point2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
