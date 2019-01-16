@@ -45,12 +45,18 @@ enum wallSide { Top, Bottom, Left, Right };    //the position of the wall
 vector<Point2D*> gray_coins;
 bool coinsBfs = false;
 Point2D* parent_forCoins[MSIZE][MSIZE];
+int coinCounter = 0;
+const int COINS_STEP = 5 * CELL_SIZE;
+
 
 vector<Point2D*> gray_target;
 //Point2D* startPoint, *targetPoint;
 
 int startPointForCoins_x = 3 * CELL_SIZE;
-int startPointForCoins_y = 5 * CELL_SIZE;
+int startPointForCoins_y = 3 * CELL_SIZE;
+
+const int MAX_COINS = pow((MSIZE - 2 * startPointForCoins_x) / COINS_STEP, 2);
+
 
 Point2D* pacmanStartPoint = new Point2D(startPointForCoins_x, startPointForCoins_y);
 
@@ -523,31 +529,20 @@ void setupMaze()
 
 bool checkPointCloseToWall(int row, int col)
 {
-	if (row -  CELL_SIZE < 0)
-	{
-		if (col -  CELL_SIZE < 0)
-		{
-			row -=  CELL_SIZE;
-			col -=  CELL_SIZE;
-		}
-		else
-		{
-			row -= CELL_SIZE;
-			col = col;
-		}
-	}
-	else
-	{
-		col -= CELL_SIZE;
-		row = row;
-	}
+	int range = 2 * CELL_SIZE;
 
-	for (int i = row; i < 2 * CELL_SIZE && i < MSIZE; i++)
-		for (int j = col; j < 2 * CELL_SIZE && j < MSIZE; j++)
-		{
-			if (maze[i][j] == WALL)
+	//don't place coin in that case
+	if (row - range <= 0 || col - range <= 0)
+		return false;
+	
+	row -= range;
+	col -= range;
+
+	for (int i = row; i < row + 2 * range && i < MSIZE; i++)
+		for (int j = col; j < col + 2 * range && j < MSIZE; j++)
+			if (maze[i][j] == WALL || maze[i][j] == UNREACHABLE || maze[i][j] == CENTER)
 				return false;
-		}
+		
 
 
 	return true;
@@ -560,14 +555,15 @@ void storeCurrentPointInParrentArray(int row, int col, Point2D* parentPoint, Poi
 	grayArray.push_back(ptAddToGray);
 }
 
-bool setPointAsGray(int& mazeRow, int& mazeCol, Point2D*& parentPoint, Point2D* parentArray[][MSIZE], vector<Point2D*> &grayVector)
+bool setPointAsGray(int mazeRow, int mazeCol, Point2D*& parentPoint, Point2D* parentArray[][MSIZE], vector<Point2D*> &grayVector)
 {
-	if ((maze[mazeRow][mazeCol] == SPACE) && checkPointCloseToWall(mazeRow, mazeCol)
+	if ((maze[mazeRow][mazeCol] == SPACE) /*&& checkPointCloseToWall(mazeRow, mazeCol)*/
 		/*((maze[mazeRow + 2 * CELL_SIZE][mazeCol] != WALL) && (maze[mazeRow][mazeCol + 2 * CELL_SIZE] != WALL)
 		&& (maze[mazeRow - 2 * CELL_SIZE][mazeCol] != WALL) && (maze[mazeRow][mazeCol - 2 * CELL_SIZE] != WALL))*/
 		)
 	{
 		maze[mazeRow][mazeCol] = COIN;	//add it to gray
+		coinCounter++;
 		storeCurrentPointInParrentArray(mazeRow, mazeCol, parentPoint, parentArray, grayVector);
 		return true;
 	}
@@ -580,9 +576,8 @@ void bfsIteration(/*Point2D* parentArray[][MSIZE], vector<Point2D*> &gray_coins,
 {
 	Point2D* pt;
 	int mazeRow, mazeCol;
-	int step = 4 * CELL_SIZE;
 
-	if (gray_coins.empty())	//grey is the edges that didn't visited yet
+	if (gray_coins.empty() || coinCounter >= MAX_COINS)	//grey is the edges that didn't visited yet
 		coinsBfs = false;	//there is no path to the target
 
 	else
@@ -603,44 +598,62 @@ void bfsIteration(/*Point2D* parentArray[][MSIZE], vector<Point2D*> &gray_coins,
 
 		else
 		{
-			if (maze[mazeRow][mazeCol] != COIN)
+			if (maze[mazeRow][mazeCol] == SPACE)
 				maze[mazeRow][mazeCol] = COIN;	//y is i, x is j
 
-			//check down
-			mazeRow = pt->getY() + step;
-			if (setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins))
-			{
-				//check up
-				mazeRow = pt->getY() + step;
-				if (setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins))
-				{
-					//check right
-					mazeRow = pt->getY();
-					mazeCol = pt->getX() + step;
-					if (setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins))
-					{
-						//check left
-						mazeCol = pt->getX() - step;
-						setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 
-					}
-				}
-			}
+			mazeRow = pt->getY() + COINS_STEP;
+			if (checkPointCloseToWall(mazeRow, mazeCol))
+				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 
-			//mazeRow = pt->getY() + step;
+			mazeRow = pt->getY() - COINS_STEP;
+			if (checkPointCloseToWall(mazeRow, mazeCol))
+				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
+
+			mazeRow = pt->getY();
+			mazeCol = pt->getX() + COINS_STEP;
+			if (checkPointCloseToWall(mazeRow, mazeCol))
+				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
+
+			mazeCol = pt->getX() - COINS_STEP;
+			if (checkPointCloseToWall(mazeRow, mazeCol))
+				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
+
+			////check down
+			//mazeRow = pt->getY() + COINS_STEP;
+			//if (setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins))
+			//{
+			//	//check up
+			//	mazeRow = pt->getY() - COINS_STEP;
+			//	if (setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins))
+			//	{
+			//		//check right
+			//		mazeRow = pt->getY();
+			//		mazeCol = pt->getX() + COINS_STEP;
+			//		if (setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins))
+			//		{
+			//			//check left
+			//			mazeCol = pt->getX() - COINS_STEP;
+			//			setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
+
+			//		}
+			//	}
+			//}
+
+			//mazeRow = pt->getY() - COINS_STEP;
 			//setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 			//
 			//	//check up
-			//mazeRow = pt->getY() + step;
+			//mazeRow = pt->getY() + COINS_STEP;
 			//setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 			//
 			//		//check right
 			//mazeRow = pt->getY();
-			//mazeCol = pt->getX() + step;
+			//mazeCol = pt->getX() + COINS_STEP;
 			//setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 			//
 			////check left
-			//mazeCol = pt->getX() - step;
+			//mazeCol = pt->getX() - COINS_STEP;
 			//setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 
 		}
@@ -649,7 +662,7 @@ void bfsIteration(/*Point2D* parentArray[][MSIZE], vector<Point2D*> &gray_coins,
 
 void setupCoins()
 {
-	coinsBfs = true;
+	;
 	while (coinsBfs)
 		bfsIteration();
 }
@@ -661,8 +674,9 @@ void init()
 	setupMaze();
 
 	gray_coins.push_back(pacmanStartPoint);
-
-	setupCoins();
+	
+	coinsBfs = true;
+//	setupCoins();
 
 	glClearColor(0.7, 0.7, 0.7, 0);
 
@@ -713,13 +727,14 @@ void moveFigureOnXAxis()
 void drawCoin(int row, int col)
 {
 	glPushMatrix();
-	glTranslated(row, col, 0);
-	glScaled(CELL_SIZE, CELL_SIZE, 1);
+	glTranslated(col, row, 0);
+	glScaled(2, 2, 1);
 
 	double PI = 3.14;
 	double alpha, x, y, radius = 1, delta = PI / 20;
 
 	//draw the outline of the wheel
+	glColor3d(1, 1, 1);
 	glBegin(GL_POLYGON);
 	for (alpha = 0; alpha <= 2 * PI; alpha += delta)
 	{
@@ -805,14 +820,15 @@ void drawMaze()
 			switch (maze[i][j])
 			{
 			case WALL:
-				glColor3d(0.2, 0, 1);    //brown
+				glColor3d(0.2, 0, 1);    //purple
 				break;
 			case SPACE:
-				glColor3d(0, 0, 0);    //white
+				glColor3d(0, 0, 0);    //black
 				break;
 			case COIN:
 				glColor3d(1, 1, 1);
-				//drawCoin(i, j);
+				/*drawCoin(i, j);
+				glColor3d(0, 0, 0);*/
 				break;
 			case UNREACHABLE:
 				glColor3d(1, 0, 0);
@@ -856,6 +872,9 @@ void idle()
 	stepCounter++;
 	if (stepCounter % 10 == 0)
 		moveFigureOnXAxis();
+
+	if (coinsBfs)
+		bfsIteration();
 
 
 	glutPostRedisplay();// calls indirectly to display
