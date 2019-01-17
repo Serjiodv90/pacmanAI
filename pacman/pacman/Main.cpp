@@ -21,6 +21,8 @@ const int WALL = 2;
 const int COIN = 3;
 const int UNREACHABLE = 4;
 const int CENTER = 5;
+const int TARGET_COIN = 6;
+const int PACMAN_VISITED = 7;
 
 /*******************************************************************/
 /*        ALWAYS WORK WITH MULTIPLICATION OF CELL_SIZE IN THE MAZE
@@ -42,7 +44,9 @@ int stepCounter = 0;
 enum wallSide { Top, Bottom, Left, Right };    //the position of the wall
 
 //gray queue for BFS algorithm
-vector<Point2D*> gray_coins;
+vector<Point2D*> gray_coins;	//for bfs ditrebution of the coins
+vector<Point2D*> conins_locations;
+
 bool coinsBfs = false;
 Point2D* parent_forCoins[MSIZE][MSIZE];
 int coinCounter = 0;
@@ -59,9 +63,10 @@ const int MAX_COINS = pow((MSIZE - 2 * startPointForCoins_x) / COINS_STEP, 2);
 
 
 Point2D* pacmanStartPoint = new Point2D(startPointForCoins_x, startPointForCoins_y);
-
 PacmanPawn pacman(pacmanStartPoint, 2 * CELL_SIZE);
-vector<double>tmpColor = { 0,1,1 };
+Point2D* nearestCoinToPacman;
+bool startPacmanRun = false;
+vector<Point2D*> pacmanRoute;
 
 Monster monster1(vector<double>({ 0, 1, 1 }), new Point2D(300, 300), 2 * CELL_SIZE);
 
@@ -553,11 +558,12 @@ void storeCurrentPointInParrentArray(int row, int col, Point2D* parentPoint, Poi
 	Point2D* ptAddToGray = new Point2D(col, row);
 	parentArray[row][col] = parentPoint;
 	grayArray.push_back(ptAddToGray);
+	conins_locations.push_back(ptAddToGray);
 }
 
 bool setPointAsGray(int mazeRow, int mazeCol, Point2D*& parentPoint, Point2D* parentArray[][MSIZE], vector<Point2D*> &grayVector)
 {
-	if ((maze[mazeRow][mazeCol] == SPACE) /*&& checkPointCloseToWall(mazeRow, mazeCol)*/
+	if ((maze[mazeRow][mazeCol] == SPACE) && checkPointCloseToWall(mazeRow, mazeCol)
 		/*((maze[mazeRow + 2 * CELL_SIZE][mazeCol] != WALL) && (maze[mazeRow][mazeCol + 2 * CELL_SIZE] != WALL)
 		&& (maze[mazeRow - 2 * CELL_SIZE][mazeCol] != WALL) && (maze[mazeRow][mazeCol - 2 * CELL_SIZE] != WALL))*/
 		)
@@ -603,20 +609,20 @@ void bfsIteration(/*Point2D* parentArray[][MSIZE], vector<Point2D*> &gray_coins,
 
 
 			mazeRow = pt->getY() + COINS_STEP;
-			if (checkPointCloseToWall(mazeRow, mazeCol))
+		//	if (checkPointCloseToWall(mazeRow, mazeCol))
 				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 
 			mazeRow = pt->getY() - COINS_STEP;
-			if (checkPointCloseToWall(mazeRow, mazeCol))
+		//	if (checkPointCloseToWall(mazeRow, mazeCol))
 				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 
 			mazeRow = pt->getY();
 			mazeCol = pt->getX() + COINS_STEP;
-			if (checkPointCloseToWall(mazeRow, mazeCol))
+		//	if (checkPointCloseToWall(mazeRow, mazeCol))
 				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 
 			mazeCol = pt->getX() - COINS_STEP;
-			if (checkPointCloseToWall(mazeRow, mazeCol))
+		//	if (checkPointCloseToWall(mazeRow, mazeCol))
 				setPointAsGray(mazeRow, mazeCol, pt, parent_forCoins, gray_coins);
 
 			////check down
@@ -662,7 +668,6 @@ void bfsIteration(/*Point2D* parentArray[][MSIZE], vector<Point2D*> &gray_coins,
 
 void setupCoins()
 {
-	;
 	while (coinsBfs)
 		bfsIteration();
 }
@@ -676,7 +681,10 @@ void init()
 	gray_coins.push_back(pacmanStartPoint);
 	
 	coinsBfs = true;
-//	setupCoins();
+	setupCoins();
+
+	startPacmanRun = true;
+	pacmanRoute.push_back(pacmanStartPoint);
 
 	glClearColor(0.7, 0.7, 0.7, 0);
 
@@ -747,64 +755,101 @@ void drawCoin(int row, int col)
 	glPopMatrix();
 }
 
+//method wiil return true if found a coin in the vector, otherwise it returns false
+bool findNearestCoin() 
+{
+	if (conins_locations.empty())
+		return false;
 
-//void setPointAsGrayForAStar(int& mazeRow, int& mazeCol, Point2D*& parentPoint)
-//{
-//    if (isBfsFoundPath(mazeRow, mazeCol, TARGET, VISITED_FROM_TARGET))    //found target
-//        storeCurrentPointForAstar(mazeRow, mazeCol, parentPoint);
-//    else if (maze[mazeRow][mazeCol] == SPACE)
-//    {
-//        maze[mazeRow][mazeCol] = GRAY;
-//        storeCurrentPointForAstar(mazeRow, mazeCol, parentPoint);
-//    }
-//}
-//
-//void a_starIteration()
-//{
-//    Point2D* pt;
-//    int mazeRow, mazeCol;
-//
-//    if (grayPQ.empty())    //grey is the edges that didn't visited yet
-//        aStar_started = false;    //there is no path to the target
-//    else
-//    {
-//        pt = grayPQ.top();    //this will be the parent
-//        grayPQ.pop();
-//
-//        mazeRow = pt->getY();
-//        mazeCol = pt->getX();
-//
-//        //paint pt VISITED
-//        if (isBfsFoundPath(mazeRow, mazeCol, TARGET, VISITED_FROM_TARGET))    //found target
-//            storeCurrentPointForAstar(mazeRow, mazeCol, pt);
-//
-//        else
-//        {
-//            if (maze[mazeRow][mazeCol] != START)
-//                maze[mazeRow][mazeCol] = VISITED_FROM_START;    //y is i, x is j
-//
-//            //check down
-//            mazeRow = pt->getY() + 1;
-//            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
-//
-//            //check up
-//            mazeRow = pt->getY() - 1;
-//            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
-//
-//            //check right
-//            mazeRow = pt->getY();
-//            mazeCol = pt->getX() + 1;
-//            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
-//
-//            //check left
-//            mazeCol = pt->getX() - 1;
-//            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
-//
-//            if (!aStar_started)    //target was found
-//                showPath(pt, START, TARGET, parent_forStartPath);
-//        }
-//    }
-//}
+	Point2D* pacmanLocation = pacman.getPacmanLocation();
+	nearestCoinToPacman = conins_locations[0];
+	double minDistance = pacmanLocation->getDistanceFromTarget(nearestCoinToPacman);
+	double tmpDist = 0.0;
+	Point2D* tmpCoinLoc;
+	int indexToDelete = 0;
+
+	for (int i = 1; i < conins_locations.size(); i++)
+	{
+		tmpCoinLoc = conins_locations[i];
+		tmpDist = pacmanLocation->getDistanceFromTarget(tmpCoinLoc);
+		if (tmpDist < minDistance)
+		{
+			minDistance = tmpDist;
+			nearestCoinToPacman = tmpCoinLoc;
+			indexToDelete = i;
+		}
+	}
+
+	conins_locations.erase(conins_locations.begin() + indexToDelete);
+	maze[nearestCoinToPacman->getY()][nearestCoinToPacman->getX()] = TARGET_COIN;
+
+	return true;
+
+}
+
+
+void setPointAsGrayForAStar(int& mazeRow, int& mazeCol, Point2D*& parentPoint)
+{
+    if (isBfsFoundPath(mazeRow, mazeCol, TARGET, VISITED_FROM_TARGET))    //found target
+        storeCurrentPointForAstar(mazeRow, mazeCol, parentPoint);
+    else if (maze[mazeRow][mazeCol] == SPACE)
+    {
+        maze[mazeRow][mazeCol] = GRAY;
+        storeCurrentPointForAstar(mazeRow, mazeCol, parentPoint);
+    }
+}
+
+void a_starIteration()
+{
+    Point2D* pt;
+    int mazeRow, mazeCol;
+
+    //if (grayPQ.empty())    //grey is the edges that didn't visited yet
+    //    aStar_started = false;    //there is no path to the target
+
+	
+
+	if (!findNearestCoin())
+		startPacmanRun = false;	
+    else
+    {
+		pt = pacmanRoute.at[0];    //this will be the parent
+		pacmanRoute.erase(pacmanRoute.begin());
+
+		mazeRow = pacman.getPacmanLocation()->getY();/*pt->getY()*/;
+		mazeCol = pacman.getPacmanLocation()->getX();/*pt->getX()*/;
+
+        //paint pt VISITED
+        //if (isBfsFoundPath(mazeRow, mazeCol, TARGET, VISITED_FROM_TARGET))    //found target
+        //    storeCurrentPointForAstar(mazeRow, mazeCol, pt);
+
+        //else
+        {
+            if (maze[mazeRow][mazeCol] != TARGET_COIN)
+                maze[mazeRow][mazeCol] = PACMAN_VISITED;    //y is i, x is j
+
+            //check up
+            mazeRow = pacman.getPacmanLocation()->getY() + 1;
+            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
+
+            //check up
+            mazeRow = pt->getY() - 1;
+            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
+
+            //check right
+            mazeRow = pt->getY();
+            mazeCol = pt->getX() + 1;
+            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
+
+            //check left
+            mazeCol = pt->getX() - 1;
+            setPointAsGrayForAStar(mazeRow, mazeCol, pt);
+
+            if (!aStar_started)    //target was found
+                showPath(pt, START, TARGET, parent_forStartPath);
+        }
+    }
+}
 
 
 //drawing the maze 100x100px - MSIZExMSIZE, setting the color for each pixel in the maze, and displaying it
@@ -834,7 +879,13 @@ void drawMaze()
 				glColor3d(1, 0, 0);
 				break;
 			case CENTER:
+				glColor3d(0.2, 0.6, 0.5);
+				break;
+			case TARGET_COIN:
 				glColor3d(0, 1, 0);
+				break;
+			case PACMAN_VISITED:
+				glColor3d(0.2, 0.8, 0);
 				break;
 
 			}
@@ -869,12 +920,15 @@ void display()
 
 void idle()
 {
-	stepCounter++;
-	if (stepCounter % 10 == 0)
-		moveFigureOnXAxis();
+	if (!coinsBfs)
+	{
+		stepCounter++;
+		if (stepCounter % 10 == 0)
+			moveFigureOnXAxis();
+	}
 
-	if (coinsBfs)
-		bfsIteration();
+	/*if (coinsBfs)
+		bfsIteration();*/
 
 
 	glutPostRedisplay();// calls indirectly to display

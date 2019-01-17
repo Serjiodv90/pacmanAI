@@ -28,6 +28,7 @@ public:
 	double get_h();
 	void set_f(Point2D* targetPoint, int levelOfPointInTree);
 	double get_f();
+	double getDistanceFromTarget(Point2D * targetPoint);
 
 };
 

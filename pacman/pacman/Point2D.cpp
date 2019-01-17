@@ -68,3 +68,9 @@ double Point2D::get_f()
 {
 	return this->f;
 }
+
+double Point2D::getDistanceFromTarget(Point2D * targetPoint)
+{
+	calcDistanceFromTarget(targetPoint);
+	return this->get_h();
+}
