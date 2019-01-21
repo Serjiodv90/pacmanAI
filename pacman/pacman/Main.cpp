@@ -1,15 +1,19 @@
 #include "GLUT.H"
 #include <math.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <time.h>
 #include <stdio.h>
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <set>
 
 #include "Point2D.h"
 #include "pacmanPawn.h"
 #include "Monster.h"
 #include "ComparePointsByDist.h"
+
 
 using namespace std;
 
@@ -66,12 +70,13 @@ const int MAX_COINS = pow((MSIZE - 2 * startPointForCoins_x) / COINS_STEP, 2);
 Point2D* pacmanStartPoint = new Point2D(startPointForCoins_x, startPointForCoins_y);
 PacmanPawn pacman(pacmanStartPoint, 2 * CELL_SIZE);
 Point2D* nearestCoinToPacman;
-bool startPacmanRun = false;
+bool startPacmanCoinSearch = false;
 //vector<Point2D*> pacmanRoute;
 priority_queue <Point2D*, vector<Point2D*>, ComparePointsByDist> pacmanRoute;
 vector<Point2D*> pacmanPath;
 
 Monster monster1(vector<double>({ 0, 1, 1 }), new Point2D(300, 300), 2 * CELL_SIZE);
+
 
 
 void thickenWallInMaze(wallSide side, int row = -1, int col = -1)
@@ -541,6 +546,50 @@ void setupMaze()
 /********************************************************************************************************/
 /********************************************************************************************************/
 
+bool checkPointCloseToWallVerticalUp(int row, int col, int range = 2 * CELL_SIZE)
+{
+	for (int i = row; i < row + 2 * range && i < MSIZE; i++)
+		if (maze[i][col] == WALL || maze[i][col] == UNREACHABLE || maze[i][col] == CENTER)
+			return false;
+
+	return true;
+}
+
+bool checkPointCloseToWallVertical(int row, int col, int range = 2 * CELL_SIZE)
+{
+	if (row - range <= 0)
+		return false;
+
+	row -= range;
+	for(int i = row; i < row + 2*range && i < MSIZE; i++)
+		if (maze[i][col] == WALL || maze[i][col] == UNREACHABLE || maze[i][col] == CENTER)
+			return false;
+
+	return true;
+}
+
+bool checkPointCloseToWallHorizontalRight(int row, int col, int range = 2 * CELL_SIZE)
+{
+	for (int j = col; j < col + 2 * range && j < MSIZE; j++)
+		if (maze[row][j] == WALL || maze[row][j] == UNREACHABLE || maze[row][j] == CENTER)
+			return false;
+
+	return true;
+}
+
+bool checkPointCloseToWallHorizontal(int row, int col, int range = 2 * CELL_SIZE)
+{
+	if (col - range <= 0)
+		return false;
+
+	col -= range;
+	for (int j = col; j < col + 2 * range && j < MSIZE; j++)
+		if (maze[row][j] == WALL || maze[row][j] == UNREACHABLE || maze[row][j] == CENTER)
+			return false;
+
+	return true;
+}
+
 bool checkPointCloseToWall(int row, int col)
 {
 	int range = 2 * CELL_SIZE;
@@ -556,6 +605,7 @@ bool checkPointCloseToWall(int row, int col)
 		for (int j = col; j < col + 2 * range && j < MSIZE; j++)
 			if (maze[i][j] == WALL || maze[i][j] == UNREACHABLE || maze[i][j] == CENTER)
 				return false;
+			
 		
 	return true;
 }
@@ -701,6 +751,7 @@ bool findNearestCoin()
 		tmpDist = pacmanLocation->getDistanceFromTarget(tmpCoinLoc);
 		if (tmpDist < minDistance)
 		{
+
 			minDistance = tmpDist;
 			nearestCoinToPacman = tmpCoinLoc;
 			indexToDelete = i;
@@ -728,7 +779,7 @@ void init()
 	setupCoins();
 
 	//pacman init
-	startPacmanRun = true;
+	startPacmanCoinSearch = true;
 	pacmanStartPoint->set_f(pacmanStartPoint, 0);
 	pacmanRoute.push(pacmanStartPoint);
 
@@ -739,71 +790,71 @@ void init()
 
 }
 
-void moveFigureOnXAxis()
-{
-	int x = pacman.getPacmanLocation()->getX();
-	int y = pacman.getPacmanLocation()->getY();
+//void moveFigureOnXAxis()
+//{
+//	int x = pacman.getPacmanLocation()->getX();
+//	int y = pacman.getPacmanLocation()->getY();
+//
+//	PacmanPawn::pacmanDirection pacDir = pacman.getDirection();
+//
+//	switch (pacDir)
+//	{
+//	case PacmanPawn::pacmanDirection::Right:
+//		break;
+//	default:
+//		break;
+//	}
+//
+//	if (maze[y][x] == COIN || maze[y][x] == TARGET_COIN)
+//		maze[y][x] = SPACE;
+//
+//	if ((maze[y - 2 * CELL_SIZE][(x + 1) + CELL_SIZE] != WALL) && (maze[y + 2 * CELL_SIZE][(x + 1) + CELL_SIZE] != WALL)
+//		&& (maze[y][(x + 1) + CELL_SIZE] != WALL))
+//	{
+//		x++;
+//		if (x >= MSIZE)
+//			x = 0;
+//		if (fmod(floor(x), 10) == 0)
+//			pacman.changeIsOpen();
+//
+//		pacman.setTranslation(PacmanPawn::pacmanDirection::Right, new Point2D(x, y));
+//	}
+//	else if ((maze[(y + 1) + CELL_SIZE][x - 2 * CELL_SIZE] != WALL) && (maze[(y + 1) + CELL_SIZE][x + CELL_SIZE] != WALL)
+//		&& (maze[(y + 1) + CELL_SIZE][x] != WALL))
+//	{
+//		y++;
+//		if (fmod(floor(y), 10) == 0)
+//			pacman.changeIsOpen();
+//
+//		pacman.setTranslation(PacmanPawn::pacmanDirection::Up, new Point2D(x, y));
+//	}
+//
+//
+//
+//}
 
-	PacmanPawn::pacmanDirection pacDir = pacman.getDirection();
-
-	switch (pacDir)
-	{
-	case PacmanPawn::pacmanDirection::Right:
-		break;
-	default:
-		break;
-	}
-
-	if (maze[y][x] == COIN || maze[y][x] == TARGET_COIN)
-		maze[y][x] = SPACE;
-
-	if ((maze[y - 2 * CELL_SIZE][(x + 1) + CELL_SIZE] != WALL) && (maze[y + 2 * CELL_SIZE][(x + 1) + CELL_SIZE] != WALL)
-		&& (maze[y][(x + 1) + CELL_SIZE] != WALL))
-	{
-		x++;
-		if (x >= MSIZE)
-			x = 0;
-		if (fmod(floor(x), 10) == 0)
-			pacman.changeIsOpen();
-
-		pacman.setTranslation(PacmanPawn::pacmanDirection::Right, new Point2D(x, y));
-	}
-	else if ((maze[(y + 1) + CELL_SIZE][x - 2 * CELL_SIZE] != WALL) && (maze[(y + 1) + CELL_SIZE][x + CELL_SIZE] != WALL)
-		&& (maze[(y + 1) + CELL_SIZE][x] != WALL))
-	{
-		y++;
-		if (fmod(floor(y), 10) == 0)
-			pacman.changeIsOpen();
-
-		pacman.setTranslation(PacmanPawn::pacmanDirection::Up, new Point2D(x, y));
-	}
-
-
-
-}
-
-void drawCoin(int row, int col)
-{
-	glPushMatrix();
-	glTranslated(col, row, 0);
-	glScaled(2, 2, 1);
-
-	double PI = 3.14;
-	double alpha, x, y, radius = 1, delta = PI / 20;
-
-	//draw the outline of the wheel
-	glColor3d(1, 1, 1);
-	glBegin(GL_POLYGON);
-	for (alpha = 0; alpha <= 2 * PI; alpha += delta)
-	{
-		x = radius * cos(alpha);
-		y = radius * sin(alpha);
-		glVertex2d(x, y);
-	}
-	glEnd();
-
-	glPopMatrix();
-}
+//void drawCoin(int row, int col)
+//{
+//	glPushMatrix();
+//	glTranslated(col, row, 0);
+//	glScaled(2, 2, 1);
+//
+//	double PI = 3.14;
+//	double alpha, x, y, radius = 1, delta = PI / 20;
+//
+////	draw the outline of the wheel
+//	glColor3d(1, 1, 1);
+//	glBegin(GL_POLYGON);
+//	for (alpha = 0; alpha <= 2 * PI; alpha += delta)
+//	{
+//		x = radius * cos(alpha);
+//		y = radius * sin(alpha);
+//		glVertex2d(x, y);
+//	}
+//	glEnd();
+//
+//	glPopMatrix();
+//}
 
 
 
@@ -814,20 +865,102 @@ void drawCoin(int row, int col)
 //
 //	return false;
 //}
+//
+//void insertToQueueUniqe(Point2D* pt)
+//{
+//	set<Point2D*, ComparePointsByDist> tmpSet;
+//	int size = pacmanRoute.size();
+//	for (int i = 0; i < size; i++)
+//	{
+//		tmpSet.insert(pacmanRoute.top());
+//		pacmanRoute.pop();
+//	}
+//
+//	size = tmpSet.size();
+//	for (set<Point2D*, ComparePointsByDist>::iterator itr = tmpSet.begin(); itr != tmpSet.end(); ++itr)
+//	{
+//		pacmanRoute.push(*itr);
+//	}
+//	tmpSet.erase(tmpSet.begin(), tmpSet.end());
+//		
+//}
 
 void storeCurrentPointForAstar(int row, int col, Point2D*& parentPoint, Point2D*& targetPoint)
 {
 	Point2D* ptAddToGray = new Point2D(col, row);
 	ptAddToGray->set_f(targetPoint, parentPoint->get_g() + 1);
-	pacmanPath.push_back(parentPoint);
-	pacmanRoute.push(ptAddToGray);
+
+	if(find(pacmanPath.begin(), pacmanPath.end(), parentPoint) == pacmanPath.end())
+		pacmanPath.push_back(parentPoint);
+
+	if(maze[row][col] != PACMAN_VISITED)
+		pacmanRoute.push(ptAddToGray);
+	//insertToQueueUniqe(ptAddToGray);
 }
 
 void setPointAsGrayForAStar(int mazeRow, int mazeCol, Point2D*& parentPoint, Point2D*& targetPoint)
 {
 	if(checkPointCloseToWall(mazeRow, mazeCol))
-		if (maze[mazeRow][mazeCol] == TARGET_COIN || maze[mazeRow][mazeCol] == COIN || maze[mazeRow][mazeCol] == SPACE)    //found target
+		if (maze[mazeRow][mazeCol] == TARGET_COIN || maze[mazeRow][mazeCol] == COIN || maze[mazeRow][mazeCol] == SPACE || maze[mazeRow][mazeCol] == PACMAN_VISITED)    //found target
 			storeCurrentPointForAstar(mazeRow, mazeCol, parentPoint, targetPoint);
+}
+
+bool checkRouteVertical(Point2D* parentPoint)
+{
+	int mazeRow = parentPoint->getY();
+	int mazeCol = parentPoint->getX();
+
+	if (checkPointCloseToWallVertical(mazeRow, mazeCol))
+	{
+		/*if (mazeRow < nearestCoinToPacman->getY())
+		{*/
+			//check up
+			mazeRow = parentPoint->getY() + 1;
+			setPointAsGrayForAStar(mazeRow, mazeCol, parentPoint, nearestCoinToPacman);
+		/*}
+		else if (mazeRow > nearestCoinToPacman->getY())
+		{*/
+			//check down
+			mazeRow = parentPoint->getY() - 1;
+			setPointAsGrayForAStar(mazeRow, mazeCol, parentPoint, nearestCoinToPacman);
+		//}
+		/*else
+			return false;*/
+
+		return true;
+	}
+	else
+		return false;
+}
+
+bool checkRouteHorizontal(Point2D* parentPoint)
+{
+	int mazeRow = parentPoint->getY();
+	int mazeCol = parentPoint->getX();
+
+	if (checkPointCloseToWallHorizontal(mazeRow, mazeCol))
+	{
+		/*if (mazeCol < nearestCoinToPacman->getX())
+		{*/
+			//check right
+			mazeRow = parentPoint->getY();
+			mazeCol = parentPoint->getX() + 1;
+			setPointAsGrayForAStar(mazeRow, mazeCol, parentPoint, nearestCoinToPacman);
+		/*}
+		else if (mazeCol > nearestCoinToPacman->getX())
+		{*/
+			//check left
+			mazeCol = parentPoint->getX() - 1;
+			setPointAsGrayForAStar(mazeRow, mazeCol, parentPoint, nearestCoinToPacman);
+		//}
+		/*else
+			return false;*/
+		
+
+		return true;
+	}
+	else
+		return false;
 }
 
 void a_starIteration()
@@ -838,7 +971,7 @@ void a_starIteration()
 
 	if (pacmanRoute.empty() /*|| !nearestCoinToPacman*//*!findNearestCoin()*/)    //grey is the edges that didn't visited yet OR //couldn't find coin
 	{
-		startPacmanRun = false;    //there is no path to the target
+		startPacmanCoinSearch = false;    //there is no path to the target
 		//findNearestCoin();
 	}
     else
@@ -853,30 +986,62 @@ void a_starIteration()
 		if (maze[mazeRow][mazeCol] == TARGET_COIN)    //found target
 		{
 			storeCurrentPointForAstar(mazeRow, mazeCol, pt, nearestCoinToPacman);
-			startPacmanRun = false;
+			startPacmanCoinSearch = false;
 		}
 
         else
         {
-            if (maze[mazeRow][mazeCol] != TARGET_COIN)
-                maze[mazeRow][mazeCol] = PACMAN_VISITED;    //y is i, x is j
+            maze[mazeRow][mazeCol] = PACMAN_VISITED;    //y is i, x is j
 
-            //check up
-            mazeRow = pt->getY() + 1;
-            setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+			int pacman_x = pacman.getPacmanLocation()->getX();
+			int pacman_y = pacman.getPacmanLocation()->getY();
+			int nearestCoin_x = nearestCoinToPacman->getX();
+			int nearestCoin_y = nearestCoinToPacman->getY();
 
-            //check up
-            mazeRow = pt->getY() - 1;
-            setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+			if (/*pacman_x*/mazeCol != nearestCoin_x && /*pacman_y */mazeRow != nearestCoin_y)
+			{
+				if (!checkRouteVertical(pt))
+					checkRouteHorizontal(pt);
+			}
+			else if (/*pacman_x*/ mazeCol != nearestCoin_x)
+			{
+				if (!checkRouteHorizontal(pt))
+					checkRouteVertical(pt);
+			}
+			else	// in case that pacman and the coin isn't on the same row (y value)
+			{
+				if (!checkRouteVertical(pt))
+					checkRouteHorizontal(pt);
+			}
 
-            //check right
-            mazeRow = pt->getY();
-            mazeCol = pt->getX() + 1;
-            setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+   //         //check up
+			//if (nearestCoinToPacman->getY() > mazeRow)
+			//{
+			//	mazeRow = pt->getY() + 1;
+			//	setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+			//}
 
-            //check left
-            mazeCol = pt->getX() - 1;
-            setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+   //         //check down
+			//if (nearestCoinToPacman->getY() < mazeRow)
+			//{
+			//	mazeRow = pt->getY() - 1;
+			//	setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+			//}
+
+   //         //check right
+			//if (nearestCoinToPacman->getX() > mazeCol)
+			//{
+			//	mazeRow = pt->getY();
+			//	mazeCol = pt->getX() + 1;
+			//	setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+			//}
+
+   //         //check left
+			//if (nearestCoinToPacman->getX() < mazeCol)
+			//{
+			//	mazeCol = pt->getX() - 1;
+			//	setPointAsGrayForAStar(mazeRow, mazeCol, pt, nearestCoinToPacman);
+			//}
 
     //        if (!startPacmanRun)    //target was found
 				//findNearestCoin();
@@ -936,48 +1101,83 @@ void drawMaze()
 
 }
 
+double calculatePacmanAngleToNextCoint(Point2D* coinLocation)
+{
+	int pac_x = pacman.getPacmanLocation()->getX();
+	int pac_y = pacman.getPacmanLocation()->getY();
+
+	int coin_x = coinLocation->getX();
+	int coin_y = coinLocation->getY();
+	int divisor = coin_x - pac_x;
+	int devident = coin_y - pac_y;
+	double angle =/* divisor == 0 ? 90 : (devident) == 0 ? 0 :*/ (atan2(devident, divisor) * 180 / M_PI);
+
+	return angle;
+
+}
+
 void movePacmanToCoin()
 {
-	int x = pacman.getPacmanLocation()->getX();
-	int y = pacman.getPacmanLocation()->getY();
+	int pacman_x = pacman.getPacmanLocation()->getX();
+	int pacman_y = pacman.getPacmanLocation()->getY();
 
 	//eat the coin
-	if (/*maze[y][x] == COIN || */maze[y][x] == TARGET_COIN)
+	if (/*maze[y][x] == COIN || */maze[pacman_y][pacman_x] == TARGET_COIN)
 	{
-		maze[y][x] = SPACE;
+		maze[pacman_y][pacman_x] = SPACE;
 		if (!pacmanRoute.empty())
-			for (int i = 0; i < pacmanRoute.size(); i++)
+		{
+			int size = pacmanRoute.size();
+			for (int i = 0; i < size; i++)
 				pacmanRoute.pop();
+		}
 
 		
-		pacmanRoute.push(pacman.getPacmanLocation());
-		startPacmanRun = true;
+		
+		startPacmanCoinSearch = true;
 		findNearestCoin();
-		
+		pacman.getPacmanLocation()->set_f(nearestCoinToPacman, 0);
+		pacmanRoute.push(pacman.getPacmanLocation());
+		return;
 	}
-
+	//multiple cells in pacmacn path vector
 	if (!pacmanPath.empty())
 	{
 		Point2D* nextMove = pacmanPath.front();
+		int nextMove_x = nextMove->getX();
+		int nextMove_y = nextMove->getY();
+		double pacmanAngle;
+
 		pacmanPath.erase(pacmanPath.begin());
 		PacmanPawn::pacmanDirection pacDir = pacman.getDirection();
 
-		
 
-		if (x < nextMove->getX())
+		/*if (pacman_x != nextMove_x && pacman_y != nextMove_y)
+		{*/
+		//pacmanAngle = calculatePacmanAngleToNextCoint(nextMove);
+		//pacman.setTranslation(int(pacmanAngle), /*new Point2D(nextMove_x, nextMove_y)*/nearestCoinToPacman);
+
+	//}
+
+		if (pacman_x < nextMove_x)
 			pacDir = PacmanPawn::pacmanDirection::Right;
-		else if (x > nextMove->getX())
+		else if (pacman_x > nextMove_x)
 			pacDir = PacmanPawn::pacmanDirection::Left;
-		else if (y < nextMove->getY())
+		else if (pacman_y < nextMove_y)
 			pacDir = PacmanPawn::pacmanDirection::Up;
-		else if (y > nextMove->getY())
+		else if (pacman_y > nextMove_y)
 			pacDir = PacmanPawn::pacmanDirection::Down;
 
-		
-		
 
-		pacman.setTranslation(pacDir, new Point2D(nextMove->getX(), nextMove->getY()));
+
+		//pacmanAngle = calculatePacmanAngleToNextCoint(nextMove);
+		//pacman.setTranslation(int(pacmanAngle), new Point2D(nextMove_x, nextMove_y)/*nearestCoinToPacman*/);
+		pacman.setTranslation(pacDir, new Point2D(nextMove_x, nextMove_y));
+		maze[pacman_y][pacman_x] = SPACE;
+
 	}
+	else
+		startPacmanCoinSearch = true;
 
 
 }
@@ -1001,8 +1201,8 @@ void idle()
 {
 	if (!coinsBfs)
 	{
-		cout << "in idle, startPacmanRun = " << startPacmanRun << endl;
-		if (startPacmanRun)
+		cout << "in idle, startPacmanRun = " << startPacmanCoinSearch << endl;
+		if (startPacmanCoinSearch)
 			a_starIteration();
 		else
 		{
@@ -1023,9 +1223,6 @@ void idle()
 
 int main(int argc, char* argv[])
 {
-
-
-
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(W, H);

@@ -35,6 +35,8 @@ public:
 	void drawPacman();
 	Point2D* getPacmanLocation();
 	void setTranslation(pacmanDirection dir, Point2D* toPoint);
+	void setTranslation(int angle, Point2D* toPoint);
+
 	pacmanDirection getDirection();
 	
 };

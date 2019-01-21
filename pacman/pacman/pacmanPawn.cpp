@@ -125,6 +125,13 @@ void PacmanPawn::setTranslation(PacmanPawn::pacmanDirection dir, Point2D * toPoi
 	this->translationPoint->setY(toPoint->getY());
 }
 
+void PacmanPawn::setTranslation(int angle, Point2D * toPoint)
+{
+	this->rotationAngle = angle;
+	this->translationPoint->setX(toPoint->getX());
+	this->translationPoint->setY(toPoint->getY());
+}
+
 PacmanPawn::pacmanDirection PacmanPawn::getDirection()
 {
 	switch (this->rotationAngle)
