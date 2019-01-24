@@ -19,7 +19,7 @@ class PacmanPawn
 private:
 	bool isOpen = false;
 	Point2D* translationPoint;
-	double scale;
+	int scale;
 	int rotationAngle = 0;
 	void drawPacmanClosed();
 	void drawPacmanOpen();
@@ -27,7 +27,7 @@ private:
 public:
 	enum pacmanDirection { Up, Down, Left, Right };
 
-	PacmanPawn(Point2D* startPoint, double scale);
+	PacmanPawn(Point2D* startPoint, int scale);
 	~PacmanPawn();
 
 	void setIsOpen(bool isOpen);
@@ -36,6 +36,7 @@ public:
 	Point2D* getPacmanLocation();
 	void setTranslation(pacmanDirection dir, Point2D* toPoint);
 	void setTranslation(int angle, Point2D* toPoint);
+	int getScale();
 
 	pacmanDirection getDirection();
 	

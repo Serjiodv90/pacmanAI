@@ -21,7 +21,9 @@ public:
 	void setY(int y);
 
 	bool operator==(const Point2D& point) const;
+	bool operator !=(const Point2D& point) const;
 
+	double getDistanceFromPoint(Point2D* point);
 	void calcDistanceFromTarget(Point2D* targetPoint);
 	void set_g(int levelOfPointInTree);
 	double get_g();

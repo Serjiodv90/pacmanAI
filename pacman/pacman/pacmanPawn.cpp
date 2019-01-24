@@ -2,7 +2,7 @@
 
 
 
-PacmanPawn::PacmanPawn(Point2D* startPoint, double scale) 
+PacmanPawn::PacmanPawn(Point2D* startPoint, int scale) 
 {
 	this->translationPoint = new Point2D(startPoint->getX(), startPoint->getY());
 	this->scale = scale;
@@ -130,6 +130,11 @@ void PacmanPawn::setTranslation(int angle, Point2D * toPoint)
 	this->rotationAngle = angle;
 	this->translationPoint->setX(toPoint->getX());
 	this->translationPoint->setY(toPoint->getY());
+}
+
+int PacmanPawn::getScale()
+{
+	return this->scale;
 }
 
 PacmanPawn::pacmanDirection PacmanPawn::getDirection()

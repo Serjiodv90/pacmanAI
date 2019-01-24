@@ -35,11 +35,21 @@ bool Point2D::operator==(const Point2D & point) const
 	return this->x == point.x && this->y == point.y;
 }
 
+bool Point2D::operator!=(const Point2D & point) const
+{
+	return !(*this == point);
+}
+
+double Point2D::getDistanceFromPoint(Point2D * point)
+{
+	double xPow = pow(this->x - point->x, 2);
+	double yPow = pow(this->y - point->y, 2);
+	return sqrtl(xPow + yPow);;
+}
+
 void Point2D::calcDistanceFromTarget(Point2D * targetPoint)
 {
-	double xPow = pow(this->x - targetPoint->x, 2);
-	double yPow = pow(this->y - targetPoint->y, 2);
-	this->h = sqrtl(xPow + yPow);
+	this->h = getDistanceFromPoint(targetPoint);
 }
 
 void Point2D::set_g(int levelOfPointInTree)
