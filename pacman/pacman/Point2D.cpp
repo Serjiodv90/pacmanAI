@@ -44,7 +44,7 @@ double Point2D::getDistanceFromPoint(Point2D * point)
 {
 	double xPow = pow(this->x - point->x, 2);
 	double yPow = pow(this->y - point->y, 2);
-	return sqrtl(xPow + yPow);;
+	return sqrtl(xPow + yPow);
 }
 
 void Point2D::calcDistanceFromTarget(Point2D * targetPoint)
