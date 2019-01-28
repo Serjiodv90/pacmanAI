@@ -35,3 +35,14 @@ void Monster::drawMonster()
 	glPopMatrix();
 
 }
+
+void Monster::setTranslation(Point2D * toPoint)
+{
+	this->translationPoint->setX(toPoint->getX());
+	this->translationPoint->setY(toPoint->getY());
+}
+
+Point2D * Monster::getLocation()
+{
+	return this->translationPoint;
+}

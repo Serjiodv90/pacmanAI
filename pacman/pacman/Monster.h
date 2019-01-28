@@ -20,6 +20,9 @@ public:
 	~Monster();
 
 	void drawMonster();
+	void setTranslation(Point2D* toPoint);
+	Point2D* getLocation();
+
 };
 
 
