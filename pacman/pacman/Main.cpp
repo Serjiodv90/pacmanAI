@@ -1,3 +1,5 @@
+#pragma warning(disable:4996)
+
 #include "GLUT.H"
 #include <math.h>
 #include <algorithm>
@@ -35,6 +37,8 @@ const int PACMAN_VISITED = 7;
 const int MONSTER1_VISITED = 1;
 const int MONSTER2_VISITED = 2;
 const int MONSTER3_VISITED = 4;
+
+unsigned char picture[MSIZE][MSIZE][3];
 
 /*******************************************************************/
 /*        ALWAYS WORK WITH MULTIPLICATION OF CELL_SIZE IN THE MAZE
@@ -113,13 +117,13 @@ priority_queue<Point2D*, vector<Point2D*>, ComparePointsByDist> monster1_grayPQ;
 vector<Point2D*> monster1_path;
 
 Point2D* monster2_startPoint = new Point2D(350, 300);
-Monster monster2(vector<double>({ 1, 0, 1 }), monster2_startPoint, 2 * CELL_SIZE);
+Monster monster2(vector<double>({ 0, 1, 0 }), monster2_startPoint, 2 * CELL_SIZE);
 Point2D* parent_monster2[MSIZE][MSIZE];
 priority_queue<Point2D*, vector<Point2D*>, ComparePointsByDist> monster2_grayPQ;
 vector<Point2D*> monster2_path;
 
 Point2D* monster3_startPoint = new Point2D(250, 300);
-Monster monster3(vector<double>({ 0.2, 0.8, 0.6 }), monster3_startPoint, 2 * CELL_SIZE);
+Monster monster3(vector<double>({ 1, 0, 0 }), monster3_startPoint, 2 * CELL_SIZE);
 Point2D* parent_monster3[MSIZE][MSIZE];
 priority_queue<Point2D*, vector<Point2D*>, ComparePointsByDist> monster3_grayPQ;
 vector<Point2D*> monster3_path;
@@ -843,7 +847,7 @@ bool findNearestCoin()
 			if (!checkForWallsBetweenTwoPoints(tmpCoinLoc, nearestMonster))
 				tmpDistFromCoinToMonster += 20 * SPACE_SIZE;
 
-			if ((tmpDist < minDistance) /*&& (tmpDistFromCoinToMonster > maxDistCoinFromMonster)*/)
+			if ((tmpDist < minDistance) && (tmpDistFromCoinToMonster > 200 /*&& tmpDistFromCoinToMonster < 50*/))
 			{
 				
 				if (find(nearestCoinsVector.begin(), nearestCoinsVector.end(), tmpCoinLoc) == nearestCoinsVector.end())
@@ -1400,7 +1404,7 @@ void clearMazeFromMonsterPath(int monsterVisited, Point2D* parentMonster[][MSIZE
 }
 
 
-void moveMonster(Monster* monster, Point2D* parent_monster[][MSIZE], vector<Point2D*>& monster_path, int monsterNumVisited, bool isPacmanCaught)
+void moveMonster(Monster* monster, Point2D* parent_monster[][MSIZE], vector<Point2D*>& monster_path, int monsterNumVisited, bool& isPacmanCaught)
 {
 	int monster_x = monster->getLocation()->getX();
 	int monster_y = monster->getLocation()->getY();
@@ -1439,7 +1443,7 @@ void moveMonster(Monster* monster, Point2D* parent_monster[][MSIZE], vector<Poin
 
 void a_starIterationForMonster(priority_queue<Point2D*, vector<Point2D*>, ComparePointsByDist>& monsterGrayPQ,
 	Point2D* parent_monster[MSIZE][MSIZE], Monster* monster, vector<Point2D*>& monster_path, Point2D* monsterTargetPoint,
-	int monsterNum_Visited, bool isPacmanCaught)
+	int monsterNum_Visited, bool& isPacmanCaught)
 {
 	Point2D* pt = nullptr;
 	int mazeRow, mazeCol;
@@ -1487,8 +1491,15 @@ void a_starIterationForMonster(priority_queue<Point2D*, vector<Point2D*>, Compar
 			
 		}
 	}
+	int counter = 0;
+	if (monster == &monster1)
+		counter = monster_Astar_Counter_Arr[0];
+	else if (monster == &monster2)
+		counter = monster_Astar_Counter_Arr[1];
+	else if (monster == &monster3)
+		counter = monster_Astar_Counter_Arr[2];
 
-	if (isPacmanCaught || monster_Astar_Counter % 300 == 0)	//target was found
+	if (isPacmanCaught || /*monster_Astar_Counter */counter % 300 == 0)	//target was found
 	{
 		isPacmanCaught = true;
 		getMonsterPathToMove(pt, monster, parent_monster, monster_path);
@@ -1522,26 +1533,28 @@ void drawMaze()
 			case COIN:
 				glColor3d(1, 1, 1);
 				break;
-			case UNREACHABLE:
+			/*case UNREACHABLE:
 				glColor3d(1, 0, 0);
-				break;
+				break;*/
 			case CENTER:
 				//glColor3d(0.2, 0.6, 0.5);
 				glColor3d(0, 0, 0);
 				break;
 			case TARGET_COIN:
-				glColor3d(0, 1, 0);
+				//glColor3d(0, 1, 0);
+				glColor3d(1, 1, 1);
 				break;
-			/*case PACMAN_VISITED:
-				glColor3d(0, 0, 1);
-				break;*/
+			default:
+				glColor3d(0, 0, 0);
+				break;
+
 			}
 
-			if (monstersMaze[i][j] >= MONSTER1_VISITED)
+			/*if (monstersMaze[i][j] >= MONSTER1_VISITED)
 				glColor3d(1, 1, 1);
 
 			if(pacmanMaze[i][j] == PACMAN_VISITED)
-				glColor3d(0, 0, 1);
+				glColor3d(0, 0, 1);*/
 
 
 			glBegin(GL_POLYGON);
@@ -1637,15 +1650,28 @@ void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glPushMatrix();
-	drawMaze();
-	glPopMatrix();
+	
 
-	pacman.drawPacman();
-	monster1.drawMonster();
-	monster2.drawMonster();
-	monster3.drawMonster();
+	if (!gameOver && !pacmanWon)
+	{
+		glPushMatrix();
+		drawMaze();
+		glPopMatrix();
 
+		pacman.drawPacman();
+		monster1.drawMonster();
+		monster2.drawMonster();
+		monster3.drawMonster();
+	}
+	else if(gameOver)
+	{
+		glRasterPos2d(0, 0);
+		glDrawPixels(MSIZE, MSIZE, GL_RGB, GL_UNSIGNED_BYTE, picture);
+	}
+	else
+	{
+
+	}
 	glutSwapBuffers();// show what was drawn in "frame buffer"
 }
 
@@ -1659,16 +1685,93 @@ void cleanUpPacmanMaze()
 
 void setGameOver()
 {
-	for (int i = 0; i < MSIZE; i++)
-		for (int j = 0; j < MSIZE; j++)
-			maze[i][j] = SPACE;
+	unsigned char* bmp= nullptr;
+
+	FILE* pf;
+	BITMAPFILEHEADER bf;
+	BITMAPINFOHEADER bi;
+
+	int sz;
+
+	pf = fopen("gameOver.bmp", "rb");	//read binary fie
+
+	fread(&bf, sizeof(bf), 1, pf);
+	fread(&bi, sizeof(bi), 1, pf);
+	sz = bi.biHeight * bi.biWidth * 3;	//3 colors - RGB
+
+	if (bmp)
+		free(bmp);
+
+	bmp = (unsigned char*)malloc(sz);
+
+	fread(bmp, 1, sz, pf);
+	fclose(pf);
+
+
+	int i, j;
+	sz = MSIZE * MSIZE * 3;
+
+	for (int k = 0, j = 0, i = 0; k < sz; k += 3)
+	{
+		picture[i][j][2] = bmp[k];		//blue
+		picture[i][j][1] = bmp[k + 1];	//green
+		picture[i][j][0] = bmp[k + 2];	//red
+		j++;
+
+		//fill the next line
+		if (j == MSIZE)
+		{
+			j = 0;
+			i++;
+		}
+	}
+
+
 }
 
 void setPacmanWon()
 {
-	for (int i = 0; i < MSIZE; i++)
-		for (int j = 0; j < MSIZE; j++)
-			maze[i][j] = WALL;
+
+	unsigned char* bmp = nullptr;
+
+	FILE* pf;
+	BITMAPFILEHEADER bf;
+	BITMAPINFOHEADER bi;
+
+	int sz;
+
+	pf = fopen("pacmanWon.bmp", "rb");	//read binary fie
+
+	fread(&bf, sizeof(bf), 1, pf);
+	fread(&bi, sizeof(bi), 1, pf);
+	sz = bi.biHeight * bi.biWidth * 3;	//3 colors - RGB
+
+	if (bmp)
+		free(bmp);
+
+	bmp = (unsigned char*)malloc(sz);
+
+	fread(bmp, 1, sz, pf);
+	fclose(pf);
+
+
+	int i, j;
+	sz = MSIZE * MSIZE * 3;
+
+	for (int k = 0, j = 0, i = 0; k < sz; k += 3)
+	{
+		picture[i][j][2] = bmp[k];		//blue
+		picture[i][j][1] = bmp[k + 1];	//green
+		picture[i][j][0] = bmp[k + 2];	//red
+		j++;
+
+		//fill the next line
+		if (j == MSIZE)
+		{
+			j = 0;
+			i++;
+		}
+	}
 }
 
 
@@ -1704,24 +1807,35 @@ void idle()
 
 			if (!isPacmanCaught1)
 			{
-				monster_Astar_Counter++;
+				monster_Astar_Counter_Arr[0]++;
 				a_starIterationForMonster(monster1_grayPQ, parent_monster1, &monster1, monster1_path, pacman.getPacmanLocation(), MONSTER1_VISITED, isPacmanCaught1);
 			}
 			else
 			{
-				//if (stepCounter % 2 == 0)
+				if (stepCounter % 2 == 0)
 				moveMonster(&monster1, parent_monster1, monster1_path, MONSTER1_VISITED, isPacmanCaught1);
 			}
 
 			if (!isPacmanCaught2)
 			{
-				monster_Astar_Counter++;
+				monster_Astar_Counter_Arr[1]++;
 				a_starIterationForMonster(monster2_grayPQ, parent_monster2, &monster2, monster2_path, nearestCoinToPacman, MONSTER2_VISITED, isPacmanCaught2);
 			}
 			else
 			{
-				//if (stepCounter % 5 == 0)
+				if (stepCounter % 4 == 0)
 				moveMonster(&monster2, parent_monster2, monster2_path, MONSTER2_VISITED, isPacmanCaught2);
+			}
+			 
+			if (!isPacmanCaught3)
+			{
+				monster_Astar_Counter_Arr[2]++;
+				a_starIterationForMonster(monster3_grayPQ, parent_monster3, &monster3, monster3_path, pacman.getPacmanLocation(), MONSTER3_VISITED, isPacmanCaught3);
+			}
+			else
+			{
+				if (stepCounter % 6 == 0)
+				moveMonster(&monster3, parent_monster3, monster3_path, MONSTER3_VISITED, isPacmanCaught3);
 			}
 		}
 		else if (gameOver)
